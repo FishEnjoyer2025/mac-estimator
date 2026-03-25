@@ -33,6 +33,8 @@ public partial class App : Application
             {
                 services.AddSingleton<EstimateFileService>();
                 services.AddSingleton<PdfGenerator>();
+                services.AddSingleton<JobIndexService>();
+                services.AddSingleton<ConfigService>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MainWindow>();
             })

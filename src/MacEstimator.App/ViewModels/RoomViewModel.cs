@@ -38,6 +38,12 @@ public partial class RoomViewModel : ObservableObject
             AddItemInternal(new LineItemViewModel(template));
     }
 
+    public void PopulateFromConfig(LineItemTemplate[] templates)
+    {
+        foreach (var template in templates)
+            AddItemInternal(new LineItemViewModel(template));
+    }
+
     [RelayCommand]
     private void AddCustomItem()
     {

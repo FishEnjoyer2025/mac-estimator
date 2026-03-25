@@ -51,9 +51,12 @@
                     <Button Content="Save" Style="{StaticResource GhostButtonStyle}"
                             Command="{Binding SaveEstimateCommand}" Margin="0,0,4,0"
                             ToolTip="Save Estimate (Ctrl+S)"/>
-                    <Button Content="Save As" Style="{StaticResource GhostButtonStyle}"
-                            Command="{Binding SaveEstimateAsCommand}" Margin="0,0,4,0"
-                            ToolTip="Save Estimate As (Ctrl+Shift+S)"/>
+                    <Button Content="Job History" Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding ShowJobHistoryCommand}" Margin="0,0,4,0"
+                            ToolTip="View all shared bids"/>
+                    <Button Content="Defaults" Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding ShowSettingsCommand}" Margin="0,0,4,0"
+                            ToolTip="Edit default rates and line items"/>
                     <Button Content="Generate PDF" Style="{StaticResource AccentButtonStyle}"
                             Command="{Binding GeneratePdfCommand}"
                             ToolTip="Generate PDF (Ctrl+P)"/>

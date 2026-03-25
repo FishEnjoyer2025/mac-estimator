@@ -13,6 +13,8 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly EstimateFileService _fileService;
     private readonly PdfGenerator _pdfGenerator;
+    private readonly JobIndexService _jobIndexService;
+    private readonly ConfigService _configService;
     private string? _currentFilePath;
     private bool _suppressModified;
 
@@ -100,10 +102,12 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
-    public MainViewModel(EstimateFileService fileService, PdfGenerator pdfGenerator)
+    public MainViewModel(EstimateFileService fileService, PdfGenerator pdfGenerator, JobIndexService jobIndexService, ConfigService configService)
     {
         _fileService = fileService;
         _pdfGenerator = pdfGenerator;
+        _jobIndexService = jobIndexService;
+        _configService = configService;
         Rooms.CollectionChanged += OnRoomsChanged;
 
         // Track modifications on all text properties
@@ -125,7 +129,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void NewEstimate()
+    private async Task NewEstimate()
     {
         if (IsModified && !ConfirmDiscard())
             return;
@@ -151,7 +155,15 @@ public partial class MainViewModel : ObservableObject
             ClearRooms();
 
             var room = new RoomViewModel { RoomName = "Room 1" };
-            room.PopulateDefaults();
+
+            // Use config-based defaults if available
+            var config = await _configService.LoadAsync();
+            var templates = ConfigService.ToTemplates(config);
+            if (templates.Length > 0)
+                room.PopulateFromConfig(templates);
+            else
+                room.PopulateDefaults();
+
             AddRoomInternal(room);
         }
         finally
@@ -163,6 +175,19 @@ public partial class MainViewModel : ObservableObject
         StatusText = "New estimate created";
     }
 
+    private string BuildFileName()
+    {
+        var num = JobNumber?.Trim() ?? "";
+        var name = JobName?.Trim() ?? "";
+        if (!string.IsNullOrEmpty(num) && !string.IsNullOrEmpty(name))
+            return $"{num} {name}";
+        if (!string.IsNullOrEmpty(num))
+            return num;
+        if (!string.IsNullOrEmpty(name))
+            return name;
+        return "Untitled";
+    }
+
     [RelayCommand]
     private async Task OpenEstimate()
     {
@@ -172,7 +197,8 @@ public partial class MainViewModel : ObservableObject
         var dialog = new OpenFileDialog
         {
             Filter = "MAC Estimates (*.macest)|*.macest|All Files (*.*)|*.*",
-            Title = "Open Estimate"
+            Title = "Open Estimate",
+            InitialDirectory = JobIndexService.SharedFolder
         };
 
         if (dialog.ShowDialog() != true)
@@ -196,13 +222,16 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveEstimate()
     {
-        if (_currentFilePath is null)
+        if (_currentFilePath is not null)
         {
-            await SaveEstimateAs();
+            await SaveToFile(_currentFilePath);
             return;
         }
 
-        await SaveToFile(_currentFilePath);
+        // Auto-save to shared folder with standard naming
+        var fileName = BuildFileName() + ".macest";
+        var path = System.IO.Path.Combine(JobIndexService.SharedFolder, fileName);
+        await SaveToFile(path);
     }
 
     [RelayCommand]
@@ -212,7 +241,8 @@ public partial class MainViewModel : ObservableObject
         {
             Filter = "MAC Estimates (*.macest)|*.macest",
             Title = "Save Estimate As",
-            FileName = string.IsNullOrWhiteSpace(JobName) ? "Untitled" : JobName
+            InitialDirectory = JobIndexService.SharedFolder,
+            FileName = BuildFileName()
         };
 
         if (dialog.ShowDialog() != true)
@@ -222,10 +252,17 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void AddRoom()
+    private async Task AddRoom()
     {
         var room = new RoomViewModel { RoomName = $"Room {Rooms.Count + 1}" };
-        room.PopulateDefaults();
+
+        var config = await _configService.LoadAsync();
+        var templates = ConfigService.ToTemplates(config);
+        if (templates.Length > 0)
+            room.PopulateFromConfig(templates);
+        else
+            room.PopulateDefaults();
+
         AddRoomInternal(room);
         MarkModified();
     }
@@ -294,7 +331,8 @@ public partial class MainViewModel : ObservableObject
         {
             Filter = "PDF Files (*.pdf)|*.pdf",
             Title = "Generate PDF Estimate",
-            FileName = string.IsNullOrWhiteSpace(JobName) ? "Estimate" : JobName
+            InitialDirectory = JobIndexService.SharedFolder,
+            FileName = BuildFileName()
         };
 
         if (dialog.ShowDialog() != true)
@@ -317,6 +355,21 @@ public partial class MainViewModel : ObservableObject
         {
             System.Windows.MessageBox.Show($"Failed to generate PDF:\n\n{ex.Message}",
                 "PDF Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ShowSettings()
+    {
+        var config = await _configService.LoadAsync();
+        var window = new SettingsWindow(_configService, config);
+        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.ShowDialog();
+
+        if (window.WasSaved)
+        {
+            _configService.InvalidateCache();
+            StatusText = "Settings saved — new estimates will use updated rates";
         }
     }
 
@@ -353,12 +406,68 @@ public partial class MainViewModel : ObservableObject
             IsModified = false;
             StatusText = $"Saved: {System.IO.Path.GetFileName(path)}";
             OnPropertyChanged(nameof(WindowTitle));
+
+            // Register in shared job index
+            await _jobIndexService.RegisterJobAsync(estimate, path, AdjustedTotal);
         }
         catch (Exception ex)
         {
             System.Windows.MessageBox.Show($"Failed to save:\n\n{ex.Message}",
                 "Save Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
         }
+    }
+
+    [RelayCommand]
+    private async Task ShowJobHistory()
+    {
+        var entries = await _jobIndexService.LoadEntriesAsync();
+        if (entries.Count == 0)
+        {
+            System.Windows.MessageBox.Show("No jobs found in the shared history.",
+                "Job History", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            return;
+        }
+
+        var jobList = new System.Text.StringBuilder();
+        jobList.AppendLine("Select a job number to open:\n");
+        for (int i = 0; i < entries.Count; i++)
+        {
+            var e = entries[i];
+            var name = string.IsNullOrWhiteSpace(e.JobName) ? "(Untitled)" : e.JobName;
+            var num = string.IsNullOrWhiteSpace(e.JobNumber) ? "" : $" #{e.JobNumber}";
+            jobList.AppendLine($"  {i + 1}. {name}{num} — {e.ClientCompany} — {e.Total:C2} ({e.SubmittedBy}, {e.ModifiedAt:M/d/yyyy})");
+        }
+
+        // Use a simple dialog for now — show the list and let them open via file dialog
+        // A proper ListView dialog would be better but this works for MVP
+        var window = new JobHistoryWindow(entries, async (entry) =>
+        {
+            if (!System.IO.File.Exists(entry.FilePath))
+            {
+                System.Windows.MessageBox.Show($"File not found:\n{entry.FilePath}",
+                    "File Missing", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                return;
+            }
+
+            if (IsModified && !ConfirmDiscard())
+                return;
+
+            try
+            {
+                var estimate = await _fileService.LoadAsync(entry.FilePath);
+                LoadFromModel(estimate);
+                _currentFilePath = entry.FilePath;
+                IsModified = false;
+                StatusText = $"Opened: {System.IO.Path.GetFileName(entry.FilePath)}";
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show($"Failed to open:\n\n{ex.Message}",
+                    "Open Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+            }
+        });
+        window.Owner = System.Windows.Application.Current.MainWindow;
+        window.ShowDialog();
     }
 
     private void AddRoomInternal(RoomViewModel room)
