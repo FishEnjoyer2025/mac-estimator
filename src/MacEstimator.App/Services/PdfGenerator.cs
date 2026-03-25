@@ -88,6 +88,8 @@ public class PdfGenerator
                             client.Item().Text(estimate.ClientEmail).FontColor(Colors.Blue.Medium);
                         if (!string.IsNullOrWhiteSpace(estimate.ClientPhone))
                             client.Item().Text(estimate.ClientPhone);
+                        if (!string.IsNullOrWhiteSpace(estimate.ClientAddress))
+                            client.Item().Text(estimate.ClientAddress);
                     });
 
                     col.Item().PaddingTop(10);

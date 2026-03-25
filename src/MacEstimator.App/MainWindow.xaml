@@ -153,6 +153,12 @@
                              Margin="0,0,0,6"/>
                     <Label Content="Phone"/>
                     <TextBox Text="{Binding ClientPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,6"/>
+                    <Label Content="Address"/>
+                    <TextBox Text="{Binding ClientAddress, UpdateSourceTrigger=PropertyChanged}"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             MinHeight="40"
                              Margin="0,0,0,16"/>
 
                     <!-- SUBMITTED BY -->
@@ -259,16 +265,17 @@
                                     <Expander IsExpanded="{Binding IsExpanded}">
                                         <Expander.Header>
                                             <DockPanel Width="{Binding RelativeSource={RelativeSource AncestorType=Expander}, Path=ActualWidth}"
-                                                       Margin="0,0,40,0">
+                                                       Margin="0,0,60,0">
                                                 <StackPanel DockPanel.Dock="Right"
                                                             Orientation="Horizontal"
                                                             VerticalAlignment="Center">
                                                     <!-- Room total -->
                                                     <TextBlock Foreground="{StaticResource SuccessBrush}"
                                                                FontWeight="Bold"
-                                                               FontSize="{StaticResource FontSizeMedium}"
+                                                               FontSize="{StaticResource FontSizeLarge}"
                                                                VerticalAlignment="Center"
-                                                               Margin="0,0,12,0">
+                                                               MinWidth="100"
+                                                               Margin="8,0,16,0">
                                                         <Run Text="{Binding RoomTotal, StringFormat=C2, Mode=OneWay}"/>
                                                     </TextBlock>
 
@@ -288,24 +295,6 @@
                                                             ToolTip="Move Down"
                                                             Margin="0,0,6,0"/>
 
-                                                    <!-- Copy room -->
-                                                    <Button Content="Copy"
-                                                            Style="{StaticResource GhostButtonStyle}"
-                                                            Padding="6,3"
-                                                            FontSize="{StaticResource FontSizeSmall}"
-                                                            Command="{Binding Data.DuplicateRoomCommand, Source={StaticResource WindowProxy}}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip="Duplicate Room"
-                                                            Margin="0,0,4,0"/>
-
-                                                    <!-- Remove room -->
-                                                    <Button Content="X"
-                                                            Style="{StaticResource DangerGhostButton}"
-                                                            Padding="6,3"
-                                                            FontSize="{StaticResource FontSizeSmall}"
-                                                            Command="{Binding Data.RemoveRoomCommand, Source={StaticResource WindowProxy}}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip="Remove Room"/>
                                                 </StackPanel>
 
                                                 <!-- Room name (editable) -->
@@ -313,7 +302,8 @@
                                                          Style="{StaticResource InlineEditTextBox}"
                                                          FontSize="{StaticResource FontSizeMedium}"
                                                          FontWeight="Bold"
-                                                         VerticalAlignment="Center"/>
+                                                         VerticalAlignment="Center"
+                                                         MaxWidth="300"/>
                                             </DockPanel>
                                         </Expander.Header>
 
@@ -374,9 +364,11 @@
                                                                 <StackPanel Grid.Column="1"
                                                                             VerticalAlignment="Center"
                                                                             Margin="4,1">
-                                                                    <!-- Name: dropdown if item has options -->
+                                                                    <!-- Name: dropdown if item has options (editable for custom text) -->
                                                                     <ComboBox ItemsSource="{Binding NameOptions}"
                                                                               SelectedItem="{Binding Name}"
+                                                                              IsEditable="True"
+                                                                              Text="{Binding Name, UpdateSourceTrigger=LostFocus}"
                                                                               Visibility="{Binding HasNameOptions, Converter={StaticResource BoolToVisConverter}}"/>
                                                                     <!-- Name: editable text if no options -->
                                                                     <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
@@ -468,7 +460,7 @@
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
 
-                                            <!-- Bottom actions -->
+                                            <!-- Bottom actions row 1 -->
                                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                                 <Button Content="+ Add Custom Item"
                                                         Style="{StaticResource GhostButtonStyle}"
@@ -487,6 +479,22 @@
                                                 <Button Content="Uncheck All"
                                                         Style="{StaticResource LinkButtonStyle}"
                                                         Command="{Binding UncheckAllCommand}"/>
+                                            </StackPanel>
+                                            <!-- Bottom actions row 2: Copy / Delete -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                                <Button Content="Copy Room"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        Padding="8,4"
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        Command="{Binding Data.DuplicateRoomCommand, Source={StaticResource WindowProxy}}"
+                                                        CommandParameter="{Binding}"
+                                                        Margin="0,0,8,0"/>
+                                                <Button Content="Delete Room"
+                                                        Style="{StaticResource DangerGhostButton}"
+                                                        Padding="8,4"
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        Command="{Binding Data.RemoveRoomCommand, Source={StaticResource WindowProxy}}"
+                                                        CommandParameter="{Binding}"/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Expander>

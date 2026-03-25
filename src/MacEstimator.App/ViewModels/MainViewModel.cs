@@ -36,6 +36,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _clientPhone = string.Empty;
 
+    [ObservableProperty]
+    private string _clientAddress = string.Empty;
+
     // Grade selector
     [ObservableProperty]
     private string _selectedGrade = "PLAM";
@@ -137,6 +140,7 @@ public partial class MainViewModel : ObservableObject
             ClientCompany = string.Empty;
             ClientEmail = string.Empty;
             ClientPhone = string.Empty;
+            ClientAddress = string.Empty;
             SelectedGrade = "PLAM";
             AdjustmentPercent = 0;
             AdjustmentLabel = string.Empty;
@@ -392,6 +396,7 @@ public partial class MainViewModel : ObservableObject
         ClientCompany = ClientCompany,
         ClientEmail = ClientEmail,
         ClientPhone = ClientPhone,
+        ClientAddress = ClientAddress,
         SelectedGrade = SelectedGrade,
         AdjustmentPercent = AdjustmentPercent,
         AdjustmentLabel = AdjustmentLabel,
@@ -412,6 +417,7 @@ public partial class MainViewModel : ObservableObject
             ClientCompany = estimate.ClientCompany;
             ClientEmail = estimate.ClientEmail;
             ClientPhone = estimate.ClientPhone;
+            ClientAddress = estimate.ClientAddress;
             SelectedGrade = estimate.SelectedGrade;
             AdjustmentPercent = estimate.AdjustmentPercent;
             AdjustmentLabel = estimate.AdjustmentLabel;

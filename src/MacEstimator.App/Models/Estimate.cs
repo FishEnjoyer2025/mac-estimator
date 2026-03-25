@@ -15,6 +15,7 @@ public class Estimate
     public string ClientCompany { get; set; } = string.Empty;
     public string ClientEmail { get; set; } = string.Empty;
     public string ClientPhone { get; set; } = string.Empty;
+    public string ClientAddress { get; set; } = string.Empty;
 
     // Content
     public List<Room> Rooms { get; set; } = [];
