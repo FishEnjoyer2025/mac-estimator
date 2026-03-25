@@ -1,0 +1,14 @@
+<Application x:Class="MacEstimator.App.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:MacEstimator.App.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/DarkTheme.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <converters:CurrencyFormatConverter x:Key="CurrencyConverter"/>
+            <converters:BoolToVisibilityConverter x:Key="BoolToVisConverter"/>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

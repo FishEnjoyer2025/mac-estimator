@@ -1,0 +1,483 @@
+<Window x:Class="MacEstimator.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:MacEstimator.App.ViewModels"
+        xmlns:cvt="clr-namespace:MacEstimator.App.Converters"
+        Title="{Binding WindowTitle}"
+        Height="800" Width="1200"
+        MinHeight="600" MinWidth="900"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <!-- Proxy so Expander headers can reach the Window's DataContext -->
+        <cvt:BindingProxy x:Key="WindowProxy" Data="{Binding}"/>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewEstimateCommand}"/>
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenEstimateCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveEstimateCommand}"/>
+        <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{Binding SaveEstimateAsCommand}"/>
+        <KeyBinding Key="P" Modifiers="Ctrl" Command="{Binding GeneratePdfCommand}"/>
+    </Window.InputBindings>
+
+    <DockPanel>
+        <!-- ============================================================
+             TOOLBAR
+             ============================================================ -->
+        <Border DockPanel.Dock="Top"
+                Background="{StaticResource BackgroundDarkest}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="12,8">
+            <DockPanel>
+                <TextBlock Text="MAC ESTIMATOR"
+                           FontSize="{StaticResource FontSizeTitle}"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource AccentBrush}"
+                           VerticalAlignment="Center"/>
+
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            DockPanel.Dock="Right">
+                    <Button Content="New" Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding NewEstimateCommand}" Margin="0,0,4,0"
+                            ToolTip="New Estimate (Ctrl+N)"/>
+                    <Button Content="Open" Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding OpenEstimateCommand}" Margin="0,0,4,0"
+                            ToolTip="Open Estimate (Ctrl+O)"/>
+                    <Button Content="Save" Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding SaveEstimateCommand}" Margin="0,0,4,0"
+                            ToolTip="Save Estimate (Ctrl+S)"/>
+                    <Button Content="Save As" Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding SaveEstimateAsCommand}" Margin="0,0,4,0"
+                            ToolTip="Save Estimate As (Ctrl+Shift+S)"/>
+                    <Button Content="Generate PDF" Style="{StaticResource AccentButtonStyle}"
+                            Command="{Binding GeneratePdfCommand}"
+                            ToolTip="Generate PDF (Ctrl+P)"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ============================================================
+             STATUS BAR
+             ============================================================ -->
+        <Border DockPanel.Dock="Bottom"
+                Background="{StaticResource BackgroundDarkest}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="12,6">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <!-- Subtotal (shown when adjustment exists) -->
+                    <TextBlock Foreground="{StaticResource ForegroundSecondary}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,16,0"
+                               Visibility="{Binding HasAdjustment, Converter={StaticResource BoolToVisConverter}}">
+                        <Run Text="Subtotal: "/>
+                        <Run Text="{Binding GrandTotal, StringFormat=C2, Mode=OneWay}"/>
+                        <Run Text="  |  "/>
+                        <Run Text="{Binding AdjustmentLabel, Mode=OneWay}"/>
+                        <Run Text=": "/>
+                        <Run Text="{Binding AdjustmentAmount, StringFormat=C2, Mode=OneWay}"/>
+                    </TextBlock>
+
+                    <!-- Grand Total -->
+                    <TextBlock Foreground="{StaticResource AccentLightBrush}"
+                               FontSize="{StaticResource FontSizeLarge}"
+                               FontWeight="Bold">
+                        <Run Text="Total: "/>
+                        <Run Text="{Binding AdjustedTotal, StringFormat=C2, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Status text -->
+                <TextBlock Text="{Binding StatusText}"
+                           Foreground="{StaticResource ForegroundSecondary}"
+                           FontSize="{StaticResource FontSizeSmall}"
+                           VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+
+        <!-- ============================================================
+             MAIN CONTENT: LEFT + RIGHT
+             ============================================================ -->
+        <Grid Margin="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="1"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Splitter line -->
+            <Border Grid.Column="1" Background="{StaticResource BorderBrush}"/>
+
+            <!-- ========================================================
+                 LEFT PANEL: Job + Client Info
+                 ======================================================== -->
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto"
+                          Background="{StaticResource BackgroundDark}"
+                          Padding="16">
+                <StackPanel>
+                    <!-- JOB INFO -->
+                    <TextBlock Text="JOB INFORMATION"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <Label Content="Job Name"/>
+                    <TextBox Text="{Binding JobName, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,6"/>
+                    <Label Content="Job Number"/>
+                    <TextBox Text="{Binding JobNumber, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- CLIENT INFO -->
+                    <TextBlock Text="CLIENT INFORMATION"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <Label Content="Name"/>
+                    <TextBox Text="{Binding ClientName, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,6"/>
+                    <Label Content="Company"/>
+                    <TextBox Text="{Binding ClientCompany, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,6"/>
+                    <Label Content="Email"/>
+                    <TextBox Text="{Binding ClientEmail, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,6"/>
+                    <Label Content="Phone"/>
+                    <TextBox Text="{Binding ClientPhone, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,16"/>
+
+                    <!-- SUBMITTED BY -->
+                    <TextBlock Text="SUBMITTED BY"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <ComboBox ItemsSource="{Binding SubmittedByOptions}"
+                              SelectedItem="{Binding SubmittedBy}"
+                              Margin="0,0,0,16"/>
+
+                    <!-- ADJUSTMENTS -->
+                    <TextBlock Text="ADJUSTMENTS"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <Label Content="Label (e.g. Contingency, Discount)"/>
+                    <TextBox Text="{Binding AdjustmentLabel, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,0,6"/>
+                    <Label Content="Percentage (+/-)"/>
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding AdjustmentPercent, UpdateSourceTrigger=LostFocus, StringFormat=0.##}"
+                                 HorizontalContentAlignment="Right"/>
+                        <TextBlock Grid.Column="1" Text=" %"
+                                   VerticalAlignment="Center"
+                                   Foreground="{StaticResource ForegroundSecondary}"
+                                   Margin="4,0,0,0"/>
+                    </Grid>
+                    <!-- Adjustment amount preview -->
+                    <TextBlock Foreground="{StaticResource SuccessBrush}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Margin="0,0,0,16"
+                               Visibility="{Binding HasAdjustment, Converter={StaticResource BoolToVisConverter}}">
+                        <Run Text="{Binding AdjustmentLabel, Mode=OneWay, TargetNullValue='Adjustment'}"/>
+                        <Run Text=": "/>
+                        <Run Text="{Binding AdjustmentAmount, StringFormat=C2, Mode=OneWay}"/>
+                    </TextBlock>
+
+                    <!-- EXCLUSIONS -->
+                    <TextBlock Text="EXCLUSIONS"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding Exclusions, UpdateSourceTrigger=PropertyChanged}"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             MinHeight="60"
+                             Margin="0,0,0,16"/>
+
+                    <!-- NOTES -->
+                    <TextBlock Text="NOTES"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource AccentBrush}"
+                               Margin="0,0,0,8"/>
+                    <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             MinHeight="60"
+                             Margin="0,0,0,8"/>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ========================================================
+                 RIGHT PANEL: Rooms & Line Items
+                 ======================================================== -->
+            <DockPanel Grid.Column="2">
+                <!-- Add Room button -->
+                <Border DockPanel.Dock="Top"
+                        Padding="16,10"
+                        Background="{StaticResource BackgroundDarkest}">
+                    <Button Content="+ Add Room"
+                            Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding AddRoomCommand}"
+                            HorizontalAlignment="Left"/>
+                </Border>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Rooms}"
+                                  Margin="16,8,16,16">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:RoomViewModel}">
+                                <Border Background="{StaticResource BackgroundMedium}"
+                                        BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="{StaticResource CornerRadiusDefault}"
+                                        Margin="0,0,0,12"
+                                        Padding="0">
+
+                                    <Expander IsExpanded="{Binding IsExpanded}">
+                                        <Expander.Header>
+                                            <DockPanel Width="{Binding RelativeSource={RelativeSource AncestorType=Expander}, Path=ActualWidth}"
+                                                       Margin="0,0,40,0">
+                                                <StackPanel DockPanel.Dock="Right"
+                                                            Orientation="Horizontal"
+                                                            VerticalAlignment="Center">
+                                                    <!-- Room total -->
+                                                    <TextBlock Foreground="{StaticResource SuccessBrush}"
+                                                               FontWeight="Bold"
+                                                               FontSize="{StaticResource FontSizeMedium}"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,0,12,0">
+                                                        <Run Text="{Binding RoomTotal, StringFormat=C2, Mode=OneWay}"/>
+                                                    </TextBlock>
+
+                                                    <!-- Move room up -->
+                                                    <Button Content="&#x25B2;"
+                                                            Style="{StaticResource SmallIconButton}"
+                                                            Command="{Binding Data.MoveRoomUpCommand, Source={StaticResource WindowProxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Move Up"
+                                                            Margin="0,0,2,0"/>
+
+                                                    <!-- Move room down -->
+                                                    <Button Content="&#x25BC;"
+                                                            Style="{StaticResource SmallIconButton}"
+                                                            Command="{Binding Data.MoveRoomDownCommand, Source={StaticResource WindowProxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Move Down"
+                                                            Margin="0,0,6,0"/>
+
+                                                    <!-- Copy room -->
+                                                    <Button Content="Copy"
+                                                            Style="{StaticResource GhostButtonStyle}"
+                                                            Padding="6,3"
+                                                            FontSize="{StaticResource FontSizeSmall}"
+                                                            Command="{Binding Data.DuplicateRoomCommand, Source={StaticResource WindowProxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Duplicate Room"
+                                                            Margin="0,0,4,0"/>
+
+                                                    <!-- Remove room -->
+                                                    <Button Content="X"
+                                                            Style="{StaticResource DangerGhostButton}"
+                                                            Padding="6,3"
+                                                            FontSize="{StaticResource FontSizeSmall}"
+                                                            Command="{Binding Data.RemoveRoomCommand, Source={StaticResource WindowProxy}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Remove Room"/>
+                                                </StackPanel>
+
+                                                <!-- Room name (editable) -->
+                                                <TextBox Text="{Binding RoomName, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource InlineEditTextBox}"
+                                                         FontSize="{StaticResource FontSizeMedium}"
+                                                         FontWeight="Bold"
+                                                         VerticalAlignment="Center"/>
+                                            </DockPanel>
+                                        </Expander.Header>
+
+                                        <StackPanel Margin="8,4,8,8">
+                                            <!-- Column headers -->
+                                            <Grid Margin="0,0,0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="28"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="90"/>
+                                                    <ColumnDefinition Width="36"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                    <ColumnDefinition Width="28"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Grid.Column="1" Text="Item" Foreground="{StaticResource ForegroundSecondary}" FontSize="{StaticResource FontSizeSmall}"/>
+                                                <TextBlock Grid.Column="2" Text="Qty / Cost" Foreground="{StaticResource ForegroundSecondary}" FontSize="{StaticResource FontSizeSmall}" HorizontalAlignment="Center"/>
+                                                <TextBlock Grid.Column="3" Text="Unit" Foreground="{StaticResource ForegroundSecondary}" FontSize="{StaticResource FontSizeSmall}" HorizontalAlignment="Center"/>
+                                                <TextBlock Grid.Column="4" Text="Rate" Foreground="{StaticResource ForegroundSecondary}" FontSize="{StaticResource FontSizeSmall}" HorizontalAlignment="Center"/>
+                                                <TextBlock Grid.Column="5" Text="Total" Foreground="{StaticResource ForegroundSecondary}" FontSize="{StaticResource FontSizeSmall}" HorizontalAlignment="Right" Margin="0,0,8,0"/>
+                                            </Grid>
+
+                                            <!-- Line items -->
+                                            <ItemsControl ItemsSource="{Binding LineItems}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:LineItemViewModel}">
+                                                        <!-- Row border for subtle separation -->
+                                                        <Border BorderBrush="{StaticResource BorderBrush}"
+                                                                BorderThickness="0,0,0,0.5"
+                                                                Padding="0,2">
+                                                            <Grid>
+                                                                <Grid.Style>
+                                                                    <Style TargetType="Grid">
+                                                                        <Style.Triggers>
+                                                                            <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                                                                <Setter Property="Opacity" Value="0.35"/>
+                                                                            </DataTrigger>
+                                                                        </Style.Triggers>
+                                                                    </Style>
+                                                                </Grid.Style>
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="28"/>
+                                                                    <ColumnDefinition Width="*"/>
+                                                                    <ColumnDefinition Width="90"/>
+                                                                    <ColumnDefinition Width="36"/>
+                                                                    <ColumnDefinition Width="80"/>
+                                                                    <ColumnDefinition Width="100"/>
+                                                                    <ColumnDefinition Width="28"/>
+                                                                </Grid.ColumnDefinitions>
+
+                                                                <!-- Enable checkbox -->
+                                                                <CheckBox Grid.Column="0"
+                                                                          IsChecked="{Binding IsEnabled}"
+                                                                          VerticalAlignment="Center"
+                                                                          HorizontalAlignment="Center"/>
+
+                                                                <!-- Item name + note -->
+                                                                <StackPanel Grid.Column="1"
+                                                                            VerticalAlignment="Center"
+                                                                            Margin="4,1">
+                                                                    <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                                                             Style="{StaticResource InlineEditTextBox}"/>
+                                                                    <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
+                                                                             Style="{StaticResource NoteTextBoxStyle}"
+                                                                             Tag="note..."/>
+                                                                </StackPanel>
+
+                                                                <!-- Quantity (PerUnit) -->
+                                                                <TextBox Grid.Column="2"
+                                                                         VerticalAlignment="Center"
+                                                                         HorizontalContentAlignment="Right"
+                                                                         Margin="2"
+                                                                         Padding="4,3"
+                                                                         Visibility="{Binding IsPerUnit, Converter={StaticResource BoolToVisConverter}}"
+                                                                         Text="{Binding Quantity, UpdateSourceTrigger=LostFocus, StringFormat=0.##}"/>
+
+                                                                <!-- VendorCost (Markup) -->
+                                                                <TextBox Grid.Column="2"
+                                                                         VerticalAlignment="Center"
+                                                                         HorizontalContentAlignment="Right"
+                                                                         Margin="2"
+                                                                         Padding="4,3"
+                                                                         Visibility="{Binding IsVendorQuote, Converter={StaticResource BoolToVisConverter}}"
+                                                                         Text="{Binding VendorCost, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0\}}"
+                                                                         ToolTip="Vendor quote amount"/>
+
+                                                                <!-- Unit label -->
+                                                                <TextBlock Grid.Column="3"
+                                                                           Text="{Binding UnitLabel}"
+                                                                           VerticalAlignment="Center"
+                                                                           HorizontalAlignment="Center"
+                                                                           Foreground="{StaticResource ForegroundSecondary}"
+                                                                           Visibility="{Binding IsPerUnit, Converter={StaticResource BoolToVisConverter}}"/>
+                                                                <TextBlock Grid.Column="3"
+                                                                           Text="&#x00D7;"
+                                                                           VerticalAlignment="Center"
+                                                                           HorizontalAlignment="Center"
+                                                                           Foreground="{StaticResource WarningBrush}"
+                                                                           FontWeight="Bold"
+                                                                           ToolTip="Markup multiplier"
+                                                                           Visibility="{Binding IsVendorQuote, Converter={StaticResource BoolToVisConverter}}"/>
+
+                                                                <!-- Rate (PerUnit) -->
+                                                                <TextBox Grid.Column="4"
+                                                                         VerticalAlignment="Center"
+                                                                         HorizontalContentAlignment="Right"
+                                                                         Margin="2"
+                                                                         Padding="4,3"
+                                                                         Visibility="{Binding IsPerUnit, Converter={StaticResource BoolToVisConverter}}"
+                                                                         Text="{Binding Rate, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0\}}"/>
+
+                                                                <!-- Rate / Multiplier (VendorQuote) -->
+                                                                <TextBox Grid.Column="4"
+                                                                         VerticalAlignment="Center"
+                                                                         HorizontalContentAlignment="Right"
+                                                                         Margin="2"
+                                                                         Padding="4,3"
+                                                                         Visibility="{Binding IsVendorQuote, Converter={StaticResource BoolToVisConverter}}"
+                                                                         Text="{Binding Rate, UpdateSourceTrigger=LostFocus, StringFormat=0.00}"
+                                                                         ToolTip="Markup multiplier (e.g. 1.20 = 20% markup)"/>
+
+                                                                <!-- Line total -->
+                                                                <TextBlock Grid.Column="5"
+                                                                           VerticalAlignment="Center"
+                                                                           HorizontalAlignment="Right"
+                                                                           Margin="0,0,8,0"
+                                                                           FontWeight="SemiBold"
+                                                                           Text="{Binding LineTotal, StringFormat=C2, Mode=OneWay}"/>
+
+                                                                <!-- Remove item -->
+                                                                <Button Grid.Column="6"
+                                                                        Content="x"
+                                                                        Padding="2"
+                                                                        FontSize="10"
+                                                                        Background="Transparent"
+                                                                        BorderThickness="0"
+                                                                        Foreground="{StaticResource ForegroundDisabled}"
+                                                                        Cursor="Hand"
+                                                                        VerticalAlignment="Center"
+                                                                        Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=ItemsControl, AncestorLevel=1}}"
+                                                                        CommandParameter="{Binding}"
+                                                                        ToolTip="Remove Item"/>
+                                                            </Grid>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+
+                                            <!-- Bottom actions -->
+                                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                <Button Content="+ Add Custom Item"
+                                                        Style="{StaticResource GhostButtonStyle}"
+                                                        Padding="8,4"
+                                                        FontSize="{StaticResource FontSizeSmall}"
+                                                        Command="{Binding AddCustomItemCommand}"
+                                                        Margin="0,0,8,0"/>
+                                                <Button Content="Check All"
+                                                        Style="{StaticResource LinkButtonStyle}"
+                                                        Command="{Binding CheckAllCommand}"
+                                                        Margin="0,0,4,0"/>
+                                                <TextBlock Text="|"
+                                                           Foreground="{StaticResource ForegroundDisabled}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,4,0"/>
+                                                <Button Content="Uncheck All"
+                                                        Style="{StaticResource LinkButtonStyle}"
+                                                        Command="{Binding UncheckAllCommand}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Expander>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+        </Grid>
+    </DockPanel>
+</Window>
