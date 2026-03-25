@@ -4,6 +4,7 @@
         xmlns:vm="clr-namespace:MacEstimator.App.ViewModels"
         xmlns:cvt="clr-namespace:MacEstimator.App.Converters"
         Title="{Binding WindowTitle}"
+        Icon="pack://application:,,,/Assets/app.ico"
         Height="800" Width="1200"
         MinHeight="600" MinWidth="900"
         WindowState="Maximized"

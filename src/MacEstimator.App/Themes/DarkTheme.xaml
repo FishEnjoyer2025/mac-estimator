@@ -6,11 +6,11 @@
          ================================================================ -->
 
     <!-- Backgrounds: darkest to lightest -->
-    <SolidColorBrush x:Key="BackgroundDarkest"    Color="#111213"/>
-    <SolidColorBrush x:Key="BackgroundDark"        Color="#1e1e1e"/>
-    <SolidColorBrush x:Key="BackgroundMedium"      Color="#2d2d2d"/>
-    <SolidColorBrush x:Key="BackgroundLight"       Color="#3e3e3e"/>
-    <SolidColorBrush x:Key="BackgroundHover"       Color="#4a4a4a"/>
+    <SolidColorBrush x:Key="BackgroundDarkest"    Color="#252629"/>
+    <SolidColorBrush x:Key="BackgroundDark"        Color="#2e3035"/>
+    <SolidColorBrush x:Key="BackgroundMedium"      Color="#383a40"/>
+    <SolidColorBrush x:Key="BackgroundLight"       Color="#45474e"/>
+    <SolidColorBrush x:Key="BackgroundHover"       Color="#52545c"/>
     <SolidColorBrush x:Key="BackgroundSelected"    Color="#094771"/>
     <SolidColorBrush x:Key="BackgroundPressed"     Color="#0061a6"/>
 
@@ -112,7 +112,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#2a2a2a"/>
+                            <Setter TargetName="Bd" Property="Background" Value="#434550"/>
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundLight}"/>
