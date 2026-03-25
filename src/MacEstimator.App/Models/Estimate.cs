@@ -19,6 +19,9 @@ public class Estimate
     // Content
     public List<Room> Rooms { get; set; } = [];
 
+    // Grade
+    public string SelectedGrade { get; set; } = "PLAM";
+
     // Adjustments
     public decimal AdjustmentPercent { get; set; }
     public string AdjustmentLabel { get; set; } = string.Empty;

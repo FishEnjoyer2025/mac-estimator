@@ -36,6 +36,20 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _clientPhone = string.Empty;
 
+    // Grade selector
+    [ObservableProperty]
+    private string _selectedGrade = "PLAM";
+
+    public string[] GradeOptions { get; } = ["PLAM", "Paint Grade", "Stain Grade"];
+
+    partial void OnSelectedGradeChanged(string value)
+    {
+        // Apply grade to all line items across all rooms
+        foreach (var room in Rooms)
+            foreach (var item in room.LineItems)
+                item.SetGrade(value);
+    }
+
     // Adjustments
     [ObservableProperty]
     private decimal _adjustmentPercent;
@@ -123,6 +137,7 @@ public partial class MainViewModel : ObservableObject
             ClientCompany = string.Empty;
             ClientEmail = string.Empty;
             ClientPhone = string.Empty;
+            SelectedGrade = "PLAM";
             AdjustmentPercent = 0;
             AdjustmentLabel = string.Empty;
             Exclusions = Estimate.DefaultExclusions;
@@ -377,6 +392,7 @@ public partial class MainViewModel : ObservableObject
         ClientCompany = ClientCompany,
         ClientEmail = ClientEmail,
         ClientPhone = ClientPhone,
+        SelectedGrade = SelectedGrade,
         AdjustmentPercent = AdjustmentPercent,
         AdjustmentLabel = AdjustmentLabel,
         Exclusions = Exclusions,
@@ -396,6 +412,7 @@ public partial class MainViewModel : ObservableObject
             ClientCompany = estimate.ClientCompany;
             ClientEmail = estimate.ClientEmail;
             ClientPhone = estimate.ClientPhone;
+            SelectedGrade = estimate.SelectedGrade;
             AdjustmentPercent = estimate.AdjustmentPercent;
             AdjustmentLabel = estimate.AdjustmentLabel;
             Exclusions = estimate.Exclusions;

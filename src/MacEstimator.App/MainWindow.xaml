@@ -222,14 +222,25 @@
                  RIGHT PANEL: Rooms & Line Items
                  ======================================================== -->
             <DockPanel Grid.Column="2">
-                <!-- Add Room button -->
+                <!-- Top bar: Grade selector + Add Room -->
                 <Border DockPanel.Dock="Top"
                         Padding="16,10"
                         Background="{StaticResource BackgroundDarkest}">
-                    <Button Content="+ Add Room"
-                            Style="{StaticResource GhostButtonStyle}"
-                            Command="{Binding AddRoomCommand}"
-                            HorizontalAlignment="Left"/>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Job Grade:"
+                                       Foreground="{StaticResource ForegroundSecondary}"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"/>
+                            <ComboBox ItemsSource="{Binding GradeOptions}"
+                                      SelectedItem="{Binding SelectedGrade}"
+                                      MinWidth="140"/>
+                        </StackPanel>
+                        <Button Content="+ Add Room"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Command="{Binding AddRoomCommand}"
+                                HorizontalAlignment="Left"/>
+                    </DockPanel>
                 </Border>
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -362,8 +373,14 @@
                                                                 <StackPanel Grid.Column="1"
                                                                             VerticalAlignment="Center"
                                                                             Margin="4,1">
+                                                                    <!-- Name: dropdown if item has options -->
+                                                                    <ComboBox ItemsSource="{Binding NameOptions}"
+                                                                              SelectedItem="{Binding Name}"
+                                                                              Visibility="{Binding HasNameOptions, Converter={StaticResource BoolToVisConverter}}"/>
+                                                                    <!-- Name: editable text if no options -->
                                                                     <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                                                                             Style="{StaticResource InlineEditTextBox}"/>
+                                                                             Style="{StaticResource InlineEditTextBox}"
+                                                                             Visibility="{Binding HasNameOptions, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Invert}"/>
                                                                     <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
                                                                              Style="{StaticResource NoteTextBoxStyle}"
                                                                              Tag="note..."/>

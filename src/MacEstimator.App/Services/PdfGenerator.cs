@@ -1,3 +1,5 @@
+using System.IO;
+using System.Reflection;
 using MacEstimator.App.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -7,8 +9,20 @@ namespace MacEstimator.App.Services;
 
 public class PdfGenerator
 {
+    private static byte[] LoadLogo()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        using var stream = assembly.GetManifestResourceStream("MacEstimator.App.Assets.mac-logo.jpg")
+            ?? throw new InvalidOperationException("Logo resource not found");
+        using var ms = new MemoryStream();
+        stream.CopyTo(ms);
+        return ms.ToArray();
+    }
+
     public void Generate(Estimate estimate, string outputPath)
     {
+        var logoBytes = LoadLogo();
+
         var grandTotal = estimate.Rooms
             .SelectMany(r => r.LineItems)
             .Where(li => li.IsEnabled)
@@ -30,23 +44,25 @@ public class PdfGenerator
                 {
                     col.Spacing(8);
 
-                    // === HEADER ===
+                    // === HEADER: Logo + Contact Info ===
                     col.Item().Row(row =>
                     {
                         row.RelativeItem().Column(left =>
                         {
                             left.Item().Text($"Ph# {CompanyInfo.Phone}").FontSize(10).Italic();
                             left.Item().Text($"Fax# {CompanyInfo.Fax}").FontSize(10).Italic();
-                            left.Item().Text(CompanyInfo.Email)
+                            var bidderEmail = estimate.SubmittedBy switch
+                            {
+                                "Rusty Philbrick" => "Rusty@MACBuildsKC.com",
+                                "Josh Irsik" => "Josh@MACBuildsKC.com",
+                                _ => CompanyInfo.Email
+                            };
+                            left.Item().Text(bidderEmail)
                                 .FontSize(10).Italic().FontColor(Colors.Blue.Medium);
                         });
 
-                        row.ConstantItem(120).Column(center =>
-                        {
-                            center.Item().AlignCenter().Text("MAC").Bold().FontSize(22).FontColor("#0078d4");
-                            center.Item().AlignCenter().Text("C A B I N E T S").FontSize(7).LetterSpacing(0.1f);
-                            center.Item().AlignCenter().Text("K A N S A S   C I T Y").FontSize(6).LetterSpacing(0.1f);
-                        });
+                        row.ConstantItem(100).AlignCenter()
+                            .Image(logoBytes).FitWidth();
 
                         row.RelativeItem().AlignRight().Column(right =>
                         {
@@ -84,7 +100,7 @@ public class PdfGenerator
 
                     col.Item().PaddingTop(8);
 
-                    // === ROOMS & LINE ITEMS ===
+                    // === ROOMS & LINE ITEMS (customer-facing: names + totals only) ===
                     foreach (var room in estimate.Rooms)
                     {
                         var enabledItems = room.LineItems.Where(li => li.IsEnabled).ToList();
@@ -96,40 +112,23 @@ public class PdfGenerator
                         // Room name
                         col.Item().Text(room.Name).Bold().FontSize(11);
 
-                        // Line items with pricing
+                        // Line items — names only, no pricing
                         foreach (var item in enabledItems)
                         {
                             var displayName = item.Name;
                             if (!string.IsNullOrWhiteSpace(item.Note))
                                 displayName += $" - {item.Note}";
 
-                            col.Item().PaddingLeft(16).Row(row =>
-                            {
-                                row.RelativeItem().Text(displayName).FontSize(10);
-
-                                if (item.Mode == PricingMode.PerUnit)
-                                {
-                                    var detail = $"{item.Quantity:0.##} {FormatUnit(item.Unit)} @ {item.Rate:C0}/{FormatUnit(item.Unit)}";
-                                    row.ConstantItem(160).AlignRight().Text(detail).FontSize(10).FontColor("#808080");
-                                }
-                                else
-                                {
-                                    var detail = $"{item.VendorCost:C0} x {item.Rate:0.00}";
-                                    row.ConstantItem(160).AlignRight().Text(detail).FontSize(10).FontColor("#808080");
-                                }
-
-                                row.ConstantItem(80).AlignRight()
-                                    .Text(item.LineTotal.ToString("C2")).FontSize(10).Bold();
-                            });
+                            col.Item().PaddingLeft(16).Text(displayName).FontSize(10);
                         }
 
-                        // Room subtotal
-                        col.Item().PaddingTop(2).PaddingRight(0).Row(row =>
+                        // Room total
+                        col.Item().PaddingTop(2).Row(row =>
                         {
                             row.RelativeItem();
                             row.ConstantItem(200).AlignRight()
-                                .Text($"{room.Name} Subtotal:  {roomTotal:C2}")
-                                .FontSize(10).Bold().Italic();
+                                .Text($"{room.Name} Total:  {roomTotal:C2}")
+                                .FontSize(11).Bold();
                         });
 
                         col.Item().PaddingTop(6);
@@ -208,12 +207,4 @@ public class PdfGenerator
         })
         .GeneratePdf(outputPath);
     }
-
-    private static string FormatUnit(UnitType unit) => unit switch
-    {
-        UnitType.LinearFoot => "LF",
-        UnitType.SquareFoot => "SF",
-        UnitType.Each => "EA",
-        _ => ""
-    };
 }

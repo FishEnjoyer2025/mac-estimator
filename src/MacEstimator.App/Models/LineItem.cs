@@ -11,6 +11,7 @@ public class LineItem
     public PricingMode Mode { get; set; }
     public decimal VendorCost { get; set; }
     public string Note { get; set; } = string.Empty;
+    public string[]? NameOptions { get; set; }
 
     public decimal LineTotal => Mode == PricingMode.PerUnit
         ? Quantity * Rate

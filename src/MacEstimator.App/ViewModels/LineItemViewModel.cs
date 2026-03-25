@@ -25,6 +25,9 @@ public partial class LineItemViewModel : ObservableObject
 
     public UnitType Unit { get; }
     public PricingMode Mode { get; }
+    public string[]? NameOptions { get; }
+
+    public bool HasNameOptions => NameOptions is { Length: > 1 };
 
     public string UnitLabel => Unit switch
     {
@@ -47,6 +50,7 @@ public partial class LineItemViewModel : ObservableObject
         _rate = template.DefaultRate;
         Unit = template.Unit;
         Mode = template.Mode;
+        NameOptions = template.NameOptions;
     }
 
     public LineItemViewModel(LineItem model)
@@ -59,12 +63,25 @@ public partial class LineItemViewModel : ObservableObject
         _note = model.Note;
         Unit = model.Unit;
         Mode = model.Mode;
+        NameOptions = model.NameOptions;
     }
 
     partial void OnIsEnabledChanged(bool value) => OnPropertyChanged(nameof(LineTotal));
     partial void OnQuantityChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
     partial void OnRateChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
     partial void OnVendorCostChanged(decimal value) => OnPropertyChanged(nameof(LineTotal));
+
+    /// <summary>
+    /// Sets grade by matching the option that contains the given prefix.
+    /// Used by the global grade selector.
+    /// </summary>
+    public void SetGrade(string gradePrefix)
+    {
+        if (NameOptions is null) return;
+        var match = NameOptions.FirstOrDefault(o => o.StartsWith(gradePrefix, StringComparison.OrdinalIgnoreCase));
+        if (match is not null)
+            Name = match;
+    }
 
     public LineItem ToModel() => new()
     {
@@ -75,6 +92,7 @@ public partial class LineItemViewModel : ObservableObject
         VendorCost = VendorCost,
         Note = Note,
         Unit = Unit,
-        Mode = Mode
+        Mode = Mode,
+        NameOptions = NameOptions
     };
 }

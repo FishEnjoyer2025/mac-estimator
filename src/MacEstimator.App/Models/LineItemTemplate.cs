@@ -17,4 +17,5 @@ public record LineItemTemplate(
     string Name,
     decimal DefaultRate,
     UnitType Unit,
-    PricingMode Mode = PricingMode.PerUnit);
+    PricingMode Mode = PricingMode.PerUnit,
+    string[]? NameOptions = null);

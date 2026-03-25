@@ -1,1 +1,8 @@
-bin/\nobj/\n.vs/\n*.user\n*.suo\n*.tmp
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.tmp
+publish/
+releases/
