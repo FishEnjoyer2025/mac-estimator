@@ -57,13 +57,15 @@ public partial class MainViewModel : ObservableObject
 
     // Adjustments
     [ObservableProperty]
-    private decimal _adjustmentPercent;
+    private decimal _adjustmentValue;
 
     [ObservableProperty]
-    private decimal _adjustmentDollar;
+    private string _adjustmentMode = "%";
 
     [ObservableProperty]
     private string _adjustmentLabel = string.Empty;
+
+    public string[] AdjustmentModeOptions { get; } = ["%", "$"];
 
     // Footer
     [ObservableProperty]
@@ -88,11 +90,13 @@ public partial class MainViewModel : ObservableObject
 
     public decimal GrandTotal => Rooms.Sum(r => r.RoomTotal);
 
-    public decimal AdjustmentAmount => (GrandTotal * AdjustmentPercent / 100m) + AdjustmentDollar;
+    public decimal AdjustmentAmount => AdjustmentMode == "%"
+        ? GrandTotal * AdjustmentValue / 100m
+        : AdjustmentValue;
 
     public decimal AdjustedTotal => GrandTotal + AdjustmentAmount;
 
-    public bool HasAdjustment => AdjustmentPercent != 0 || AdjustmentDollar != 0;
+    public bool HasAdjustment => AdjustmentValue != 0;
 
     public bool IsAdjustmentDeduct => AdjustmentAmount < 0;
 
@@ -126,7 +130,7 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnIsModifiedChanged(bool value) => OnPropertyChanged(nameof(WindowTitle));
 
-    partial void OnAdjustmentPercentChanged(decimal value)
+    partial void OnAdjustmentValueChanged(decimal value)
     {
         OnPropertyChanged(nameof(AdjustmentAmount));
         OnPropertyChanged(nameof(AdjustedTotal));
@@ -134,11 +138,10 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsAdjustmentDeduct));
     }
 
-    partial void OnAdjustmentDollarChanged(decimal value)
+    partial void OnAdjustmentModeChanged(string value)
     {
         OnPropertyChanged(nameof(AdjustmentAmount));
         OnPropertyChanged(nameof(AdjustedTotal));
-        OnPropertyChanged(nameof(HasAdjustment));
         OnPropertyChanged(nameof(IsAdjustmentDeduct));
     }
 
@@ -160,8 +163,8 @@ public partial class MainViewModel : ObservableObject
             ClientPhone = string.Empty;
             ClientAddress = string.Empty;
             SelectedGrade = "PLAM";
-            AdjustmentPercent = 0;
-            AdjustmentDollar = 0;
+            AdjustmentValue = 0;
+            AdjustmentMode = "%";
             AdjustmentLabel = string.Empty;
             Exclusions = Estimate.DefaultExclusions;
             Notes = string.Empty;
@@ -524,8 +527,8 @@ public partial class MainViewModel : ObservableObject
         ClientPhone = ClientPhone,
         ClientAddress = ClientAddress,
         SelectedGrade = SelectedGrade,
-        AdjustmentPercent = AdjustmentPercent,
-        AdjustmentDollar = AdjustmentDollar,
+        AdjustmentPercent = AdjustmentMode == "%" ? AdjustmentValue : 0,
+        AdjustmentDollar = AdjustmentMode == "$" ? AdjustmentValue : 0,
         AdjustmentLabel = AdjustmentLabel,
         Exclusions = Exclusions,
         Notes = Notes,
@@ -546,8 +549,16 @@ public partial class MainViewModel : ObservableObject
             ClientPhone = estimate.ClientPhone;
             ClientAddress = estimate.ClientAddress;
             SelectedGrade = estimate.SelectedGrade;
-            AdjustmentPercent = estimate.AdjustmentPercent;
-            AdjustmentDollar = estimate.AdjustmentDollar;
+            if (estimate.AdjustmentDollar != 0)
+            {
+                AdjustmentMode = "$";
+                AdjustmentValue = estimate.AdjustmentDollar;
+            }
+            else
+            {
+                AdjustmentMode = "%";
+                AdjustmentValue = estimate.AdjustmentPercent;
+            }
             AdjustmentLabel = estimate.AdjustmentLabel;
             Exclusions = estimate.Exclusions;
             Notes = estimate.Notes;

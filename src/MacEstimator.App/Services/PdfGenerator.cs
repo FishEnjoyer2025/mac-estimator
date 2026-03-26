@@ -28,7 +28,9 @@ public class PdfGenerator
             .Where(li => li.IsEnabled)
             .Sum(li => li.LineTotal);
 
-        var adjustmentAmount = (grandTotal * estimate.AdjustmentPercent / 100m) + estimate.AdjustmentDollar;
+        var adjustmentAmount = estimate.AdjustmentPercent != 0
+            ? grandTotal * estimate.AdjustmentPercent / 100m
+            : estimate.AdjustmentDollar;
         var adjustedTotal = grandTotal + adjustmentAmount;
 
         Document.Create(container =>
@@ -147,13 +149,9 @@ public class PdfGenerator
 
                     if (hasAdjustment)
                     {
-                        // Build adjustment description (e.g. "5%", "$500", or "5% + $500")
-                        var parts = new List<string>();
-                        if (estimate.AdjustmentPercent != 0)
-                            parts.Add($"{estimate.AdjustmentPercent:0.##}%");
-                        if (estimate.AdjustmentDollar != 0)
-                            parts.Add(estimate.AdjustmentDollar.ToString("C2"));
-                        var adjustDesc = string.Join(" + ", parts);
+                        var adjustDesc = estimate.AdjustmentPercent != 0
+                            ? $"{estimate.AdjustmentPercent:0.##}%"
+                            : estimate.AdjustmentDollar.ToString("C2");
 
                         var adjustColor = adjustmentAmount < 0 ? "#d13438" : "#13a10e";
 
