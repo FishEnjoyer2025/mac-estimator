@@ -25,6 +25,7 @@ public class Estimate
 
     // Adjustments
     public decimal AdjustmentPercent { get; set; }
+    public decimal AdjustmentDollar { get; set; }
     public string AdjustmentLabel { get; set; } = string.Empty;
 
     // Footer

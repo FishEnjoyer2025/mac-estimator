@@ -60,6 +60,9 @@ public partial class MainViewModel : ObservableObject
     private decimal _adjustmentPercent;
 
     [ObservableProperty]
+    private decimal _adjustmentDollar;
+
+    [ObservableProperty]
     private string _adjustmentLabel = string.Empty;
 
     // Footer
@@ -85,11 +88,13 @@ public partial class MainViewModel : ObservableObject
 
     public decimal GrandTotal => Rooms.Sum(r => r.RoomTotal);
 
-    public decimal AdjustmentAmount => GrandTotal * AdjustmentPercent / 100m;
+    public decimal AdjustmentAmount => (GrandTotal * AdjustmentPercent / 100m) + AdjustmentDollar;
 
     public decimal AdjustedTotal => GrandTotal + AdjustmentAmount;
 
-    public bool HasAdjustment => AdjustmentPercent != 0;
+    public bool HasAdjustment => AdjustmentPercent != 0 || AdjustmentDollar != 0;
+
+    public bool IsAdjustmentDeduct => AdjustmentAmount < 0;
 
     public string WindowTitle
     {
@@ -114,7 +119,7 @@ public partial class MainViewModel : ObservableObject
         PropertyChanged += (_, e) =>
         {
             if (e.PropertyName is not (nameof(StatusText) or nameof(IsModified) or nameof(WindowTitle)
-                or nameof(GrandTotal) or nameof(AdjustmentAmount) or nameof(AdjustedTotal) or nameof(HasAdjustment)))
+                or nameof(GrandTotal) or nameof(AdjustmentAmount) or nameof(AdjustedTotal) or nameof(HasAdjustment) or nameof(IsAdjustmentDeduct)))
                 MarkModified();
         };
     }
@@ -126,6 +131,15 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(AdjustmentAmount));
         OnPropertyChanged(nameof(AdjustedTotal));
         OnPropertyChanged(nameof(HasAdjustment));
+        OnPropertyChanged(nameof(IsAdjustmentDeduct));
+    }
+
+    partial void OnAdjustmentDollarChanged(decimal value)
+    {
+        OnPropertyChanged(nameof(AdjustmentAmount));
+        OnPropertyChanged(nameof(AdjustedTotal));
+        OnPropertyChanged(nameof(HasAdjustment));
+        OnPropertyChanged(nameof(IsAdjustmentDeduct));
     }
 
     [RelayCommand]
@@ -147,6 +161,7 @@ public partial class MainViewModel : ObservableObject
             ClientAddress = string.Empty;
             SelectedGrade = "PLAM";
             AdjustmentPercent = 0;
+            AdjustmentDollar = 0;
             AdjustmentLabel = string.Empty;
             Exclusions = Estimate.DefaultExclusions;
             Notes = string.Empty;
@@ -394,6 +409,8 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(GrandTotal));
         OnPropertyChanged(nameof(AdjustmentAmount));
         OnPropertyChanged(nameof(AdjustedTotal));
+        OnPropertyChanged(nameof(HasAdjustment));
+        OnPropertyChanged(nameof(IsAdjustmentDeduct));
     }
 
     private async Task SaveToFile(string path)
@@ -508,6 +525,7 @@ public partial class MainViewModel : ObservableObject
         ClientAddress = ClientAddress,
         SelectedGrade = SelectedGrade,
         AdjustmentPercent = AdjustmentPercent,
+        AdjustmentDollar = AdjustmentDollar,
         AdjustmentLabel = AdjustmentLabel,
         Exclusions = Exclusions,
         Notes = Notes,
@@ -529,6 +547,7 @@ public partial class MainViewModel : ObservableObject
             ClientAddress = estimate.ClientAddress;
             SelectedGrade = estimate.SelectedGrade;
             AdjustmentPercent = estimate.AdjustmentPercent;
+            AdjustmentDollar = estimate.AdjustmentDollar;
             AdjustmentLabel = estimate.AdjustmentLabel;
             Exclusions = estimate.Exclusions;
             Notes = estimate.Notes;
