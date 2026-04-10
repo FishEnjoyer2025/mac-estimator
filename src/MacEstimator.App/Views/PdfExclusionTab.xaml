@@ -1,0 +1,370 @@
+<UserControl x:Class="MacEstimator.App.Views.PdfExclusionTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MacEstimator.App.ViewModels"
+             d:DataContext="{d:DesignInstance vm:PdfExclusionViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             AllowDrop="True"
+             Background="{StaticResource BackgroundDark}">
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============================================================
+             DROP ZONE
+             ============================================================ -->
+        <Border Grid.Row="0"
+                Background="{StaticResource BackgroundMedium}"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="2"
+                CornerRadius="{StaticResource CornerRadiusDefault}"
+                Padding="24,16"
+                Margin="0,0,0,16"
+                x:Name="DropZone">
+            <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Content="Browse..."
+                        Style="{StaticResource GhostButtonStyle}"
+                        Command="{Binding BrowsePdfCommand}"
+                        VerticalAlignment="Center"
+                        Margin="16,0,0,0"/>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock FontSize="{StaticResource FontSizeMedium}"
+                               Foreground="{StaticResource ForegroundPrimary}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="Drop an architectural PDF here or click Browse"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsAnalyzing}" Value="True">
+                                        <Setter Property="Text" Value="Analyzing..."/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding LoadedFileName}"
+                               Foreground="{StaticResource AccentLightBrush}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Margin="0,4,0,0"
+                               Visibility="{Binding LoadedFileName, Converter={StaticResource StringToVisConverter}}"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ============================================================
+             MAIN CONTENT: KEYWORDS + RESULTS
+             ============================================================ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="1"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Splitter -->
+            <Border Grid.Column="1" Background="{StaticResource BorderBrush}"/>
+
+            <!-- ========================================================
+                 LEFT: KEYWORD CONFIGURATION
+                 ======================================================== -->
+            <ScrollViewer Grid.Column="0"
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="0,0,16,0">
+                <StackPanel>
+                    <!-- GOOD KEYWORDS -->
+                    <TextBlock Text="GOOD KEYWORDS"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource SuccessBrush}"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Things we want to see on drawings"
+                               Foreground="{StaticResource ForegroundSecondary}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Margin="0,0,0,8"/>
+
+                    <!-- Add good keyword -->
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding NewGoodKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Add keyword..."
+                                 Margin="0,0,4,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding AddGoodKeywordCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Grid.Column="1" Content="+"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="8,4"
+                                Command="{Binding AddGoodKeywordCommand}"/>
+                    </Grid>
+
+                    <!-- Good keyword list -->
+                    <ItemsControl ItemsSource="{Binding GoodKeywords}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource BackgroundMedium}"
+                                        CornerRadius="2"
+                                        Padding="8,4"
+                                        Margin="0,0,0,2">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right"
+                                                Content="x"
+                                                Padding="4,1"
+                                                FontSize="10"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Foreground="{StaticResource ForegroundDisabled}"
+                                                Cursor="Hand"
+                                                Command="{Binding DataContext.RemoveGoodKeywordCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
+                                        <TextBlock Text="{Binding}"
+                                                   Foreground="{StaticResource SuccessBrush}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="{StaticResource FontSizeSmall}"/>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Height="1"
+                            Background="{StaticResource BorderBrush}"
+                            Margin="0,16,0,16"/>
+
+                    <!-- BAD KEYWORDS -->
+                    <TextBlock Text="BAD KEYWORDS"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource ErrorBrush}"
+                               Margin="0,0,0,8"/>
+                    <TextBlock Text="Heads up items to watch for"
+                               Foreground="{StaticResource ForegroundSecondary}"
+                               FontSize="{StaticResource FontSizeSmall}"
+                               Margin="0,0,0,8"/>
+
+                    <!-- Add bad keyword -->
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding NewBadKeyword, UpdateSourceTrigger=PropertyChanged}"
+                                 Tag="Add keyword..."
+                                 Margin="0,0,4,0">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Return" Command="{Binding AddBadKeywordCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button Grid.Column="1" Content="+"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="8,4"
+                                Command="{Binding AddBadKeywordCommand}"/>
+                    </Grid>
+
+                    <!-- Bad keyword list -->
+                    <ItemsControl ItemsSource="{Binding BadKeywords}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource BackgroundMedium}"
+                                        CornerRadius="2"
+                                        Padding="8,4"
+                                        Margin="0,0,0,2">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right"
+                                                Content="x"
+                                                Padding="4,1"
+                                                FontSize="10"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Foreground="{StaticResource ForegroundDisabled}"
+                                                Cursor="Hand"
+                                                Command="{Binding DataContext.RemoveBadKeywordCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
+                                        <TextBlock Text="{Binding}"
+                                                   Foreground="{StaticResource ErrorBrush}"
+                                                   VerticalAlignment="Center"
+                                                   FontSize="{StaticResource FontSizeSmall}"/>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ========================================================
+                 RIGHT: RESULTS
+                 ======================================================== -->
+            <ScrollViewer Grid.Column="2"
+                          VerticalScrollBarVisibility="Auto"
+                          Padding="16,0,0,0">
+                <StackPanel>
+                    <!-- No results placeholder -->
+                    <TextBlock Text="Drop a PDF to see analysis results"
+                               Foreground="{StaticResource ForegroundDisabled}"
+                               FontSize="{StaticResource FontSizeMedium}"
+                               HorizontalAlignment="Center"
+                               Margin="0,40,0,0"
+                               Visibility="{Binding HasResults, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Invert}"/>
+
+                    <!-- Results panel -->
+                    <StackPanel Visibility="{Binding HasResults, Converter={StaticResource BoolToVisConverter}}">
+
+                        <!-- FITNESS SCORE -->
+                        <Border Background="{StaticResource BackgroundMedium}"
+                                CornerRadius="{StaticResource CornerRadiusDefault}"
+                                Padding="24,16"
+                                Margin="0,0,0,16">
+                            <StackPanel HorizontalAlignment="Center">
+                                <TextBlock Text="FITNESS SCORE"
+                                           Foreground="{StaticResource ForegroundSecondary}"
+                                           FontSize="{StaticResource FontSizeSmall}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,8"/>
+                                <TextBlock FontSize="48"
+                                           FontWeight="Bold"
+                                           HorizontalAlignment="Center">
+                                    <TextBlock.Foreground>
+                                        <SolidColorBrush Color="{Binding FitnessScoreColor, Converter={StaticResource StringToColorConverter}}"/>
+                                    </TextBlock.Foreground>
+                                    <Run Text="{Binding FitnessScore, Mode=OneWay}"/>
+                                </TextBlock>
+                                <TextBlock FontSize="{StaticResource FontSizeMedium}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,4,0,0">
+                                    <TextBlock.Foreground>
+                                        <SolidColorBrush Color="{Binding FitnessScoreColor, Converter={StaticResource StringToColorConverter}}"/>
+                                    </TextBlock.Foreground>
+                                    <Run Text="{Binding FitnessLabel, Mode=OneWay}"/>
+                                </TextBlock>
+                                <TextBlock Foreground="{StaticResource ForegroundSecondary}"
+                                           FontSize="{StaticResource FontSizeSmall}"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,8,0,0">
+                                    <Run Text="{Binding TotalPages, Mode=OneWay}"/>
+                                    <Run Text=" pages scanned"/>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- FOUND GOOD KEYWORDS -->
+                        <TextBlock Text="FOUND - GOOD"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource SuccessBrush}"
+                                   Margin="0,0,0,6"
+                                   Visibility="{Binding FoundGoodKeywords.Count, Converter={StaticResource CountToVisConverter}}"/>
+                        <ItemsControl ItemsSource="{Binding FoundGoodKeywords}"
+                                      Margin="0,0,0,12">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BackgroundMedium}"
+                                            CornerRadius="2"
+                                            Padding="8,4"
+                                            Margin="0,0,0,2">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       Foreground="{StaticResource ForegroundSecondary}"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       VerticalAlignment="Center">
+                                                <Run Text="{Binding OccurrenceCount, Mode=OneWay}"/>
+                                                <Run Text="x | pg "/>
+                                                <Run Text="{Binding PagesDisplay, Mode=OneWay}"/>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Keyword}"
+                                                       Foreground="{StaticResource SuccessBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- FOUND BAD KEYWORDS -->
+                        <TextBlock Text="FOUND - HEADS UP"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource ErrorBrush}"
+                                   Margin="0,0,0,6"
+                                   Visibility="{Binding FoundBadKeywords.Count, Converter={StaticResource CountToVisConverter}}"/>
+                        <ItemsControl ItemsSource="{Binding FoundBadKeywords}"
+                                      Margin="0,0,0,12">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource BackgroundMedium}"
+                                            CornerRadius="2"
+                                            Padding="8,4"
+                                            Margin="0,0,0,2">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right"
+                                                       Foreground="{StaticResource ForegroundSecondary}"
+                                                       FontSize="{StaticResource FontSizeSmall}"
+                                                       VerticalAlignment="Center">
+                                                <Run Text="{Binding OccurrenceCount, Mode=OneWay}"/>
+                                                <Run Text="x | pg "/>
+                                                <Run Text="{Binding PagesDisplay, Mode=OneWay}"/>
+                                            </TextBlock>
+                                            <TextBlock Text="{Binding Keyword}"
+                                                       Foreground="{StaticResource ErrorBrush}"
+                                                       VerticalAlignment="Center"/>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- NOT FOUND -->
+                        <TextBlock Text="NOT FOUND"
+                                   FontWeight="Bold"
+                                   Foreground="{StaticResource ForegroundSecondary}"
+                                   Margin="0,0,0,6"
+                                   Visibility="{Binding MissingGoodKeywords.Count, Converter={StaticResource CountToVisConverter}}"/>
+                        <ItemsControl ItemsSource="{Binding MissingGoodKeywords}"
+                                      Margin="0,0,0,12">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}"
+                                               Foreground="{StaticResource ForegroundDisabled}"
+                                               FontSize="{StaticResource FontSizeSmall}"
+                                               Margin="8,1"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- EXTRACTED TEXT TOGGLE -->
+                        <Button Content="{Binding ShowExtractedText, Converter={StaticResource ToggleTextConverter}}"
+                                Style="{StaticResource LinkButtonStyle}"
+                                Command="{Binding ToggleExtractedTextCommand}"
+                                HorizontalAlignment="Left"
+                                Margin="0,8,0,4"/>
+                        <TextBox Text="{Binding ExtractedText, Mode=OneWay}"
+                                 IsReadOnly="True"
+                                 TextWrapping="Wrap"
+                                 MaxHeight="300"
+                                 VerticalScrollBarVisibility="Auto"
+                                 FontSize="{StaticResource FontSizeSmall}"
+                                 Foreground="{StaticResource ForegroundSecondary}"
+                                 Visibility="{Binding ShowExtractedText, Converter={StaticResource BoolToVisConverter}}"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ============================================================
+             STATUS BAR
+             ============================================================ -->
+        <Border Grid.Row="2"
+                Margin="0,8,0,0"
+                Padding="0,4">
+            <TextBlock Text="{Binding StatusText}"
+                       Foreground="{StaticResource ForegroundSecondary}"
+                       FontSize="{StaticResource FontSizeSmall}"/>
+        </Border>
+    </Grid>
+</UserControl>

@@ -439,6 +439,53 @@
     </Style>
 
     <!-- ================================================================
+         TABCONTROL
+         ================================================================ -->
+    <Style TargetType="TabControl">
+        <Setter Property="Background" Value="{StaticResource BackgroundDark}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <Style TargetType="TabItem">
+        <Setter Property="Background" Value="{StaticResource BackgroundDarkest}"/>
+        <Setter Property="Foreground" Value="{StaticResource ForegroundSecondary}"/>
+        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="FontSize" Value="{StaticResource FontSizeDefault}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TabItem">
+                    <Border x:Name="Bd"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,0,0,2"
+                            Padding="{TemplateBinding Padding}"
+                            Cursor="Hand">
+                        <ContentPresenter ContentSource="Header"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundDark}"/>
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource ForegroundPrimary}"/>
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsSelected" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource BackgroundMedium}"/>
+                            <Setter Property="Foreground" Value="{StaticResource ForegroundPrimary}"/>
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ================================================================
          SCROLLVIEWER
          ================================================================ -->
     <Style TargetType="ScrollViewer">

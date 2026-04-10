@@ -1,6 +1,7 @@
 using System.Windows;
 using MacEstimator.App.Services;
 using MacEstimator.App.ViewModels;
+using MacEstimator.App.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Velopack;
@@ -35,7 +36,11 @@ public partial class App : Application
                 services.AddSingleton<PdfGenerator>();
                 services.AddSingleton<JobIndexService>();
                 services.AddSingleton<ConfigService>();
+                services.AddSingleton<PdfTextExtractor>();
+                services.AddSingleton<KeywordScoringService>();
+                services.AddSingleton<KeywordConfigService>();
                 services.AddSingleton<MainViewModel>();
+                services.AddSingleton<PdfExclusionViewModel>();
                 services.AddSingleton<MainWindow>();
             })
             .Build();

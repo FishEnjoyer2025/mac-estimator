@@ -8,11 +8,13 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
 
-    public MainWindow(MainViewModel vm)
+    public MainWindow(MainViewModel vm, PdfExclusionViewModel pdfVm)
     {
         InitializeComponent();
         _vm = vm;
         DataContext = vm;
+        PdfExclusionControl.DataContext = pdfVm;
+        Loaded += async (_, _) => await pdfVm.InitializeCommand.ExecuteAsync(null);
     }
 
     protected override void OnClosing(CancelEventArgs e)

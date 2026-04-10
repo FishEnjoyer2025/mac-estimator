@@ -9,6 +9,10 @@
             </ResourceDictionary.MergedDictionaries>
             <converters:CurrencyFormatConverter x:Key="CurrencyConverter"/>
             <converters:BoolToVisibilityConverter x:Key="BoolToVisConverter"/>
+            <converters:StringToVisibilityConverter x:Key="StringToVisConverter"/>
+            <converters:CountToVisibilityConverter x:Key="CountToVisConverter"/>
+            <converters:ToggleTextConverter x:Key="ToggleTextConverter"/>
+            <converters:StringToColorConverter x:Key="StringToColorConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
