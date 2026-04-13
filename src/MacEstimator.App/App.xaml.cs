@@ -24,6 +24,16 @@ public partial class App : Application
 
         DispatcherUnhandledException += (s, args) =>
         {
+            var logPath = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                "mac-estimator", "error.log");
+            try
+            {
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(logPath)!);
+                System.IO.File.AppendAllText(logPath,
+                    $"\n[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]\n{args.Exception}\n");
+            }
+            catch { }
             MessageBox.Show(args.Exception.Message, "MAC Estimator Error",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             args.Handled = true;
@@ -34,13 +44,20 @@ public partial class App : Application
             {
                 services.AddSingleton<EstimateFileService>();
                 services.AddSingleton<PdfGenerator>();
+                services.AddSingleton<ReportGenerator>();
                 services.AddSingleton<JobIndexService>();
                 services.AddSingleton<ConfigService>();
+                services.AddSingleton<HistoricalDataService>();
                 services.AddSingleton<PdfTextExtractor>();
                 services.AddSingleton<KeywordScoringService>();
                 services.AddSingleton<KeywordConfigService>();
+                services.AddSingleton<PricingConfigService>();
+                services.AddSingleton<GeminiService>();
+                services.AddSingleton<PlanReaderService>();
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<PdfExclusionViewModel>();
+                services.AddSingleton<InsightsViewModel>();
+                services.AddSingleton<WarRoomViewModel>();
                 services.AddSingleton<MainWindow>();
             })
             .Build();
@@ -49,6 +66,19 @@ public partial class App : Application
 
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         var vm = _host.Services.GetRequiredService<MainViewModel>();
+
+        // Load historical data for pricing hints
+        var historicalService = _host.Services.GetRequiredService<HistoricalDataService>();
+        _ = historicalService.LoadAsync().ContinueWith(_ =>
+            Dispatcher.Invoke(() =>
+            {
+                LineItemViewModel.SetHistoricalService(historicalService);
+                RoomViewModel.SetHistoricalService(historicalService);
+            }));
+
+        // Pre-load pricing config (creates xlsx on first run)
+        var pricingService = _host.Services.GetRequiredService<PricingConfigService>();
+        _ = pricingService.LoadAsync();
 
         // Start with one default room
         vm.NewEstimateCommand.Execute(null);
@@ -60,7 +90,7 @@ public partial class App : Application
         _ = CheckForUpdatesAsync();
     }
 
-    private static async Task CheckForUpdatesAsync()
+    private async Task CheckForUpdatesAsync()
     {
         try
         {
@@ -75,7 +105,17 @@ public partial class App : Application
                 return;
 
             await mgr.DownloadUpdatesAsync(update);
-            mgr.ApplyUpdatesAndRestart(update);
+
+            // Ask user before restarting — don't lose unsaved work
+            var result = await Dispatcher.InvokeAsync(() =>
+                MessageBox.Show(
+                    $"Version {update.TargetFullRelease.Version} is ready to install. Restart now?",
+                    "Update Available",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information));
+
+            if (result == MessageBoxResult.Yes)
+                mgr.ApplyUpdatesAndRestart(update);
         }
         catch
         {

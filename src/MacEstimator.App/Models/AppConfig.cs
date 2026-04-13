@@ -16,4 +16,6 @@ public class LineItemConfig
     public string Unit { get; set; } = "LinearFoot";
     public string Mode { get; set; } = "PerUnit";
     public List<string>? NameOptions { get; set; }
+    public decimal? PaintGradeRate { get; set; }
+    public decimal? StainGradeRate { get; set; }
 }

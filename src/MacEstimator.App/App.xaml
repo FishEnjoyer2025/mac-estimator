@@ -1,7 +1,8 @@
 <Application x:Class="MacEstimator.App.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:converters="clr-namespace:MacEstimator.App.Converters">
+             xmlns:converters="clr-namespace:MacEstimator.App.Converters"
+             xmlns:views="clr-namespace:MacEstimator.App.Views">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -13,6 +14,8 @@
             <converters:CountToVisibilityConverter x:Key="CountToVisConverter"/>
             <converters:ToggleTextConverter x:Key="ToggleTextConverter"/>
             <converters:StringToColorConverter x:Key="StringToColorConverter"/>
+            <views:DraftVisibilityConverter x:Key="DraftVisConverter"/>
+            <views:SubmittedVisibilityConverter x:Key="SubmittedVisConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

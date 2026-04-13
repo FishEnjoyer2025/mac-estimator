@@ -24,9 +24,7 @@ public class PdfGenerator
         var logoBytes = LoadLogo();
 
         var grandTotal = estimate.Rooms
-            .SelectMany(r => r.LineItems)
-            .Where(li => li.IsEnabled)
-            .Sum(li => li.LineTotal);
+            .Sum(r => r.LineItems.Where(li => li.IsEnabled).Sum(li => li.LineTotal) * Math.Max(r.Multiplier, 1));
 
         var adjustmentAmount = estimate.AdjustmentPercent != 0
             ? grandTotal * estimate.AdjustmentPercent / 100m
@@ -111,10 +109,12 @@ public class PdfGenerator
                         if (enabledItems.Count == 0)
                             continue;
 
-                        var roomTotal = enabledItems.Sum(li => li.LineTotal);
+                        var multiplier = Math.Max(room.Multiplier, 1);
+                        var roomTotal = enabledItems.Sum(li => li.LineTotal) * multiplier;
 
-                        // Room name
-                        col.Item().Text(room.Name).Bold().FontSize(11);
+                        // Room name (with multiplier if > 1)
+                        var roomLabel = multiplier > 1 ? $"{room.Name} (x{multiplier})" : room.Name;
+                        col.Item().Text(roomLabel).Bold().FontSize(11);
 
                         // Line items — names only, no pricing
                         foreach (var item in enabledItems)

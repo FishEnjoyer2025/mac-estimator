@@ -81,7 +81,9 @@ public class ConfigService
             li.DefaultRate,
             Enum.TryParse<UnitType>(li.Unit, out var u) ? u : UnitType.LinearFoot,
             Enum.TryParse<PricingMode>(li.Mode, out var m) ? m : PricingMode.PerUnit,
-            li.NameOptions?.ToArray()
+            li.NameOptions?.ToArray(),
+            li.PaintGradeRate,
+            li.StainGradeRate
         )).ToArray();
     }
 
@@ -96,7 +98,9 @@ public class ConfigService
                 DefaultRate = t.DefaultRate,
                 Unit = t.Unit.ToString(),
                 Mode = t.Mode.ToString(),
-                NameOptions = t.NameOptions?.ToList()
+                NameOptions = t.NameOptions?.ToList(),
+                PaintGradeRate = t.PaintGradeRate,
+                StainGradeRate = t.StainGradeRate
             });
         }
         return config;

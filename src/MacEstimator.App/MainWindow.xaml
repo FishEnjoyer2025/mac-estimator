@@ -30,9 +30,9 @@
              ============================================================ -->
         <Border DockPanel.Dock="Top"
                 Background="{StaticResource BackgroundDarkest}"
-                BorderBrush="{StaticResource BorderBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="12,8">
+                BorderBrush="{StaticResource AccentBrush}"
+                BorderThickness="0,0,0,2"
+                Padding="12,10">
             <DockPanel>
                 <TextBlock Text="MAC ESTIMATOR"
                            FontSize="{StaticResource FontSizeTitle}"
@@ -58,6 +58,28 @@
                     <Button Content="Defaults" Style="{StaticResource GhostButtonStyle}"
                             Command="{Binding ShowSettingsCommand}" Margin="0,0,4,0"
                             ToolTip="Edit default rates and line items"/>
+
+                    <!-- Reports dropdown -->
+                    <Button x:Name="ReportsButton" Style="{StaticResource GhostButtonStyle}"
+                            Click="OnReportsClick" Margin="0,0,4,0"
+                            ToolTip="Generate pipeline, performance, or bid reports">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Reports" VerticalAlignment="Center"/>
+                            <TextBlock Text=" &#x25BE;" VerticalAlignment="Center" FontSize="10"/>
+                        </StackPanel>
+                        <Button.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem Header="Weekly Pipeline"
+                                          Command="{Binding GenerateWeeklyReportCommand}"/>
+                                <MenuItem Header="Monthly Report"
+                                          Command="{Binding GenerateMonthlyReportCommand}"/>
+                                <Separator/>
+                                <MenuItem Header="Bid Summary"
+                                          Command="{Binding GenerateBidSummaryCommand}"/>
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+
                     <Button Content="Generate PDF" Style="{StaticResource AccentButtonStyle}"
                             Command="{Binding GeneratePdfCommand}"
                             ToolTip="Generate PDF (Ctrl+P)"/>
@@ -68,12 +90,19 @@
         <!-- ============================================================
              TAB CONTROL
              ============================================================ -->
-        <TabControl Background="{StaticResource BackgroundDark}"
+        <TabControl x:Name="MainTabControl" Background="{StaticResource BackgroundDark}"
                     BorderThickness="0"
                     Padding="0">
 
         <!-- ============================================================
-             TAB 1: ESTIMATE
+             TAB 1: WAR ROOM
+             ============================================================ -->
+        <TabItem Header="War Room">
+            <views:WarRoomTab x:Name="WarRoomControl"/>
+        </TabItem>
+
+        <!-- ============================================================
+             TAB 2: ESTIMATE
              ============================================================ -->
         <TabItem Header="Estimate">
         <DockPanel>
@@ -119,13 +148,32 @@
                         <Run Text="{Binding AdjustmentAmount, StringFormat=C2, Mode=OneWay}"/>
                     </TextBlock>
 
-                    <!-- Grand Total -->
-                    <TextBlock Foreground="{StaticResource AccentLightBrush}"
-                               FontSize="{StaticResource FontSizeLarge}"
-                               FontWeight="Bold">
-                        <Run Text="Total: "/>
-                        <Run Text="{Binding AdjustedTotal, StringFormat=C2, Mode=OneWay}"/>
-                    </TextBlock>
+                    <!-- Grand Total + Win Probability -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Foreground="{StaticResource AccentLightBrush}"
+                                   FontSize="{StaticResource FontSizeLarge}"
+                                   FontWeight="Bold"
+                                   VerticalAlignment="Center">
+                            <Run Text="Total: "/>
+                            <Run Text="{Binding AdjustedTotal, StringFormat=C2, Mode=OneWay}"/>
+                        </TextBlock>
+                        <Border Background="{StaticResource BackgroundMedium}"
+                                CornerRadius="4"
+                                Padding="8,2"
+                                Margin="12,0,0,0"
+                                VerticalAlignment="Center"
+                                Visibility="{Binding WinProbabilityText, Converter={StaticResource StringToVisConverter}}">
+                            <TextBlock Text="{Binding WinProbabilityText}"
+                                       FontSize="{StaticResource FontSizeSmall}"
+                                       FontWeight="SemiBold">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Border>
+                    </StackPanel>
                 </StackPanel>
 
                 <!-- Status text -->
@@ -179,7 +227,22 @@
                              Margin="0,0,0,6"/>
                     <Label Content="Company"/>
                     <TextBox Text="{Binding ClientCompany, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,0,6"/>
+                             Margin="0,0,0,0"/>
+                    <!-- Contractor auto-fill suggestions -->
+                    <ListBox ItemsSource="{Binding ContractorSuggestions}"
+                             Visibility="{Binding ShowContractorSuggestions, Converter={StaticResource BoolToVisConverter}}"
+                             Background="{StaticResource BackgroundMedium}"
+                             BorderBrush="{StaticResource AccentBrush}"
+                             BorderThickness="1"
+                             MaxHeight="120"
+                             Margin="0,0,0,6"
+                             SelectionChanged="OnContractorSelected">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="{StaticResource FontSizeSmall}" Padding="4,2"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                     <Label Content="Email"/>
                     <TextBox Text="{Binding ClientEmail, UpdateSourceTrigger=PropertyChanged}"
                              Margin="0,0,0,6"/>
@@ -285,10 +348,18 @@
                                       SelectedItem="{Binding SelectedGrade}"
                                       MinWidth="140"/>
                         </StackPanel>
-                        <Button Content="+ Add Room"
-                                Style="{StaticResource GhostButtonStyle}"
-                                Command="{Binding AddRoomCommand}"
-                                HorizontalAlignment="Left"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <Button Content="+ Add Room"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Command="{Binding AddRoomCommand}"
+                                    Padding="14,7"/>
+                            <Button Content="AI Bid"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    Command="{Binding AiBidCommand}"
+                                    Padding="14,7"
+                                    Margin="8,0,0,0"
+                                    ToolTip="AI reads architectural plans and auto-fills the estimate"/>
+                        </StackPanel>
                     </DockPanel>
                 </Border>
 
@@ -300,9 +371,12 @@
                                 <Border Background="{StaticResource BackgroundMedium}"
                                         BorderBrush="{StaticResource BorderBrush}"
                                         BorderThickness="1"
-                                        CornerRadius="{StaticResource CornerRadiusDefault}"
+                                        CornerRadius="{StaticResource CornerRadiusMedium}"
                                         Margin="0,0,0,12"
-                                        Padding="0">
+                                        Padding="0"
+                                        ClipToBounds="True">
+                                    <DockPanel>
+                                    <Border DockPanel.Dock="Left" Width="4" Background="{StaticResource AccentBrush}"/>
 
                                     <Expander IsExpanded="{Binding IsExpanded}">
                                         <Expander.Header>
@@ -339,13 +413,42 @@
 
                                                 </StackPanel>
 
-                                                <!-- Room name (editable) -->
-                                                <TextBox Text="{Binding RoomName, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource InlineEditTextBox}"
-                                                         FontSize="{StaticResource FontSizeMedium}"
-                                                         FontWeight="Bold"
-                                                         VerticalAlignment="Center"
-                                                         MaxWidth="300"/>
+                                                <!-- Room name + multiplier -->
+                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBox Text="{Binding RoomName, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource InlineEditTextBox}"
+                                                             FontSize="{StaticResource FontSizeMedium}"
+                                                             FontWeight="Bold"
+                                                             VerticalAlignment="Center"
+                                                             MaxWidth="300"/>
+                                                    <!-- Room multiplier (for repeating room types) -->
+                                                    <TextBlock Text="x" Foreground="{StaticResource ForegroundSecondary}"
+                                                               VerticalAlignment="Center" Margin="8,0,2,0"
+                                                               FontSize="{StaticResource FontSizeSmall}"/>
+                                                    <TextBox Text="{Binding Multiplier, UpdateSourceTrigger=LostFocus}"
+                                                             Width="32" Padding="4,2"
+                                                             HorizontalContentAlignment="Center"
+                                                             VerticalAlignment="Center"
+                                                             ToolTip="Room count — multiplies all items (e.g. 10 identical hotel rooms)"/>
+                                                </StackPanel>
+
+                                                <!-- Smart suggestions from historical bids -->
+                                                <Border DockPanel.Dock="Bottom"
+                                                        Background="{StaticResource BackgroundDarkest}"
+                                                        CornerRadius="4" Padding="8,4" Margin="0,4,0,0"
+                                                        Visibility="{Binding HasSuggestions, Converter={StaticResource BoolToVisConverter}}">
+                                                    <DockPanel>
+                                                        <Button DockPanel.Dock="Right" Content="Apply"
+                                                                Style="{StaticResource AccentButtonStyle}"
+                                                                Padding="10,2" FontSize="11"
+                                                                Command="{Binding ApplySuggestionsCommand}"
+                                                                ToolTip="Fill quantities from historical averages"/>
+                                                        <TextBlock Foreground="{StaticResource WarningBrush}"
+                                                                   FontSize="11" VerticalAlignment="Center">
+                                                            <Run Text="{Binding SuggestionSummary, Mode=OneWay}"/>
+                                                        </TextBlock>
+                                                    </DockPanel>
+                                                </Border>
                                             </DockPanel>
                                         </Expander.Header>
 
@@ -411,14 +514,25 @@
                                                                               SelectedItem="{Binding Name}"
                                                                               IsEditable="True"
                                                                               Text="{Binding Name, UpdateSourceTrigger=LostFocus}"
+                                                                              Foreground="#ffffff"
+                                                                              FontSize="14"
                                                                               Visibility="{Binding HasNameOptions, Converter={StaticResource BoolToVisConverter}}"/>
                                                                     <!-- Name: editable text if no options -->
                                                                     <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                                                              Style="{StaticResource InlineEditTextBox}"
+                                                                             Foreground="#ffffff"
+                                                                             FontSize="14"
                                                                              Visibility="{Binding HasNameOptions, Converter={StaticResource BoolToVisConverter}, ConverterParameter=Invert}"/>
                                                                     <TextBox Text="{Binding Note, UpdateSourceTrigger=PropertyChanged}"
                                                                              Style="{StaticResource NoteTextBoxStyle}"
                                                                              Tag="note..."/>
+                                                                    <!-- Historical pricing hint -->
+                                                                    <TextBlock Text="{Binding PricingHint}"
+                                                                               FontSize="10"
+                                                                               Foreground="{StaticResource WarningBrush}"
+                                                                               Opacity="0.8"
+                                                                               Margin="2,0,0,0"
+                                                                               Visibility="{Binding HasPricingHint, Converter={StaticResource BoolToVisConverter}}"/>
                                                                 </StackPanel>
 
                                                                 <!-- Quantity (PerUnit) -->
@@ -463,7 +577,20 @@
                                                                          Margin="2"
                                                                          Padding="4,3"
                                                                          Visibility="{Binding IsPerUnit, Converter={StaticResource BoolToVisConverter}}"
-                                                                         Text="{Binding Rate, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0\}}"/>
+                                                                         Text="{Binding Rate, UpdateSourceTrigger=LostFocus, StringFormat=\{0:0.##\}}"
+                                                                         ToolTip="{Binding CostFloor, StringFormat='Cost floor: {0:C0}'}">
+                                                                    <TextBox.Style>
+                                                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding IsLowMargin}" Value="True">
+                                                                                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                                                                                    <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+                                                                                    <Setter Property="ToolTip" Value="Rate is below cost floor!"/>
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </TextBox.Style>
+                                                                </TextBox>
 
                                                                 <!-- Rate / Multiplier (VendorQuote) -->
                                                                 <TextBox Grid.Column="4"
@@ -540,6 +667,7 @@
                                             </StackPanel>
                                         </StackPanel>
                                     </Expander>
+                                    </DockPanel>
                                 </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -551,10 +679,17 @@
         </TabItem>
 
         <!-- ============================================================
-             TAB 2: PDF EXCLUSION
+             TAB 3: PDF EXCLUSION
              ============================================================ -->
         <TabItem Header="PDF Exclusion">
             <views:PdfExclusionTab x:Name="PdfExclusionControl"/>
+        </TabItem>
+
+        <!-- ============================================================
+             TAB 4: INSIGHTS
+             ============================================================ -->
+        <TabItem Header="Insights">
+            <views:InsightsTab x:Name="InsightsControl"/>
         </TabItem>
 
         </TabControl>

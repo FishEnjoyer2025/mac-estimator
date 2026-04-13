@@ -18,4 +18,7 @@ public record LineItemTemplate(
     decimal DefaultRate,
     UnitType Unit,
     PricingMode Mode = PricingMode.PerUnit,
-    string[]? NameOptions = null);
+    string[]? NameOptions = null,
+    decimal? PaintGradeRate = null,
+    decimal? StainGradeRate = null,
+    decimal? CostFloor = null);

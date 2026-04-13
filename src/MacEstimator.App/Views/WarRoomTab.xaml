@@ -1,0 +1,226 @@
+<UserControl x:Class="MacEstimator.App.Views.WarRoomTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:MacEstimator.App.ViewModels"
+             xmlns:views="clr-namespace:MacEstimator.App.Views"
+             d:DataContext="{d:DesignInstance vm:WarRoomViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             Background="{StaticResource BackgroundDark}"
+             Loaded="OnLoaded">
+
+    <DockPanel>
+        <!-- Header bar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource BackgroundDarkest}" Padding="16,12">
+            <DockPanel>
+                <TextBlock Text="WAR ROOM" FontSize="20" FontWeight="Bold"
+                           Foreground="{StaticResource ErrorBrush}" VerticalAlignment="Center"/>
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Border Background="{StaticResource BackgroundMedium}" CornerRadius="4" Padding="12,4" Margin="0,0,8,0">
+                        <TextBlock Foreground="{StaticResource AccentLightBrush}" FontWeight="SemiBold">
+                            <Run Text="{Binding TotalActive, Mode=OneWay}"/><Run Text=" active"/>
+                        </TextBlock>
+                    </Border>
+                    <Border Background="{StaticResource BackgroundMedium}" CornerRadius="4" Padding="12,4" Margin="0,0,8,0">
+                        <TextBlock Foreground="{StaticResource SuccessBrush}" FontWeight="SemiBold">
+                            <Run Text="{Binding TotalPipelineValue, Mode=OneWay}"/><Run Text=" pipeline"/>
+                        </TextBlock>
+                    </Border>
+                    <Border Background="{StaticResource BackgroundMedium}" CornerRadius="4" Padding="12,4">
+                        <TextBlock Foreground="{StaticResource ForegroundSecondary}">
+                            <Run Text="Win rate: "/><Run Text="{Binding WinRateText, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Pipeline columns -->
+        <Grid Margin="8,8,8,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- DRAFTS -->
+            <Border Grid.Column="0" Background="{StaticResource BackgroundMedium}" CornerRadius="6" Margin="4">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{StaticResource BackgroundDarkest}" Padding="10,8" CornerRadius="6,6,0,0">
+                        <TextBlock FontWeight="Bold" Foreground="{StaticResource ForegroundSecondary}" FontSize="11">
+                            <Run Text="DRAFTS"/><Run Text="{Binding Drafts.Count, StringFormat=' ({0})', Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6">
+                        <ItemsControl ItemsSource="{Binding Drafts}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:BidCardViewModel}">
+                                    <Border Background="{StaticResource BackgroundDark}" CornerRadius="4" Margin="0,3" Padding="8,6"
+                                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Foreground="{StaticResource AccentLightBrush}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock Text="{Binding JobName}" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ForegroundPrimary}"/>
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding ClientCompany}" Foreground="{StaticResource ForegroundSecondary}" FontSize="9" Margin="0,2,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <Button Content="Sent" Style="{StaticResource GhostButtonStyle}" Padding="6,2" FontSize="9" Command="{Binding MarkSubmittedCommand}" Margin="0,0,4,0"/>
+                                                <Button Content="Open" Style="{StaticResource GhostButtonStyle}" Padding="6,2" FontSize="9" Command="{Binding OpenEstimateCommand}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- SUBMITTED -->
+            <Border Grid.Column="1" Background="{StaticResource BackgroundMedium}" CornerRadius="6" Margin="4">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{StaticResource AccentBrush}" Padding="10,8" CornerRadius="6,6,0,0">
+                        <TextBlock FontWeight="Bold" Foreground="White" FontSize="11">
+                            <Run Text="SUBMITTED"/><Run Text="{Binding Submitted.Count, StringFormat=' ({0})', Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6">
+                        <ItemsControl ItemsSource="{Binding Submitted}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:BidCardViewModel}">
+                                    <Border CornerRadius="4" Margin="0,3" Padding="8,6" BorderThickness="1"
+                                            BorderBrush="{StaticResource BorderBrush}">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{StaticResource BackgroundDark}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource ErrorBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Foreground="{StaticResource AccentLightBrush}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock Text="{Binding JobName}" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ForegroundPrimary}"/>
+                                            </DockPanel>
+                                            <DockPanel Margin="0,2,0,0">
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding WinProbability}" FontSize="9" Foreground="{StaticResource WarningBrush}"/>
+                                                <TextBlock Foreground="{StaticResource ForegroundSecondary}" FontSize="9">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource ForegroundSecondary}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsOverdue}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                                                                    <Setter Property="FontWeight" Value="Bold"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                    <Run Text="{Binding AgingText, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </DockPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <Button Content="Followed Up" Style="{StaticResource GhostButtonStyle}" Padding="6,2" FontSize="9" Command="{Binding MarkFollowedUpCommand}" Margin="0,0,4,0"/>
+                                                <Button Content="Won" Foreground="{StaticResource SuccessBrush}" Background="Transparent" BorderBrush="{StaticResource SuccessBrush}" BorderThickness="1" Padding="4,2" FontSize="9" Command="{Binding MarkWonCommand}" Margin="0,0,4,0"/>
+                                                <Button Content="Lost" Foreground="{StaticResource ErrorBrush}" Background="Transparent" BorderBrush="{StaticResource ErrorBrush}" BorderThickness="1" Padding="4,2" FontSize="9" Command="{Binding MarkLostCommand}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- FOLLOWED UP -->
+            <Border Grid.Column="2" Background="{StaticResource BackgroundMedium}" CornerRadius="6" Margin="4">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="#6d5700" Padding="10,8" CornerRadius="6,6,0,0">
+                        <TextBlock FontWeight="Bold" Foreground="{StaticResource WarningBrush}" FontSize="11">
+                            <Run Text="FOLLOWED UP"/><Run Text="{Binding FollowedUp.Count, StringFormat=' ({0})', Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6">
+                        <ItemsControl ItemsSource="{Binding FollowedUp}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:BidCardViewModel}">
+                                    <Border Background="{StaticResource BackgroundDark}" CornerRadius="4" Margin="0,3" Padding="8,6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Foreground="{StaticResource AccentLightBrush}" FontWeight="Bold" FontSize="11"/>
+                                                <TextBlock Text="{Binding JobName}" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ForegroundPrimary}"/>
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding AgingText}" Foreground="{StaticResource ForegroundSecondary}" FontSize="9" Margin="0,2,0,0"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                                <Button Content="Won" Foreground="{StaticResource SuccessBrush}" Background="Transparent" BorderBrush="{StaticResource SuccessBrush}" BorderThickness="1" Padding="4,2" FontSize="9" Command="{Binding MarkWonCommand}" Margin="0,0,4,0"/>
+                                                <Button Content="Lost" Foreground="{StaticResource ErrorBrush}" Background="Transparent" BorderBrush="{StaticResource ErrorBrush}" BorderThickness="1" Padding="4,2" FontSize="9" Command="{Binding MarkLostCommand}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- WON -->
+            <Border Grid.Column="3" Background="{StaticResource BackgroundMedium}" CornerRadius="6" Margin="4">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="#0d5f0a" Padding="10,8" CornerRadius="6,6,0,0">
+                        <TextBlock FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" FontSize="11">
+                            <Run Text="WON"/><Run Text="{Binding TotalWon, StringFormat=' ({0})', Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6">
+                        <ItemsControl ItemsSource="{Binding Won}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:BidCardViewModel}">
+                                    <Border Background="{StaticResource BackgroundDark}" CornerRadius="4" Margin="0,3" Padding="8,6" BorderBrush="#1a6b17" BorderThickness="1">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" FontSize="11"/>
+                                            <TextBlock Text="{Binding JobName}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ForegroundPrimary}"/>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- LOST -->
+            <Border Grid.Column="4" Background="{StaticResource BackgroundMedium}" CornerRadius="6" Margin="4">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="#5f0a0a" Padding="10,8" CornerRadius="6,6,0,0">
+                        <TextBlock FontWeight="Bold" Foreground="{StaticResource ErrorBrush}" FontSize="11">
+                            <Run Text="LOST"/><Run Text="{Binding TotalLost, StringFormat=' ({0})', Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="6">
+                        <ItemsControl ItemsSource="{Binding Lost}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:BidCardViewModel}">
+                                    <Border Background="{StaticResource BackgroundDark}" CornerRadius="4" Margin="0,3" Padding="8,6" BorderBrush="#6b1717" BorderThickness="1">
+                                        <DockPanel>
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding Total}" Foreground="{StaticResource ErrorBrush}" FontWeight="Bold" FontSize="11"/>
+                                            <TextBlock Text="{Binding JobName}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource ForegroundPrimary}"/>
+                                        </DockPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</UserControl>
